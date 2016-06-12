@@ -119,3 +119,8 @@ class Author(object):
         @param coauthor the Author object to add
         """
         self.coauthors.add(coauthor)
+    def __str__(self):
+        """ String represenation of an author.
+        @return the name of the author
+        """
+        return self.name
