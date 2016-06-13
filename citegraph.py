@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with CiteGraph.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
+import copy
 from lxml import html
+import pygraphviz
 import re
 import requests
 import urllib
@@ -124,3 +127,64 @@ class Author(object):
         @return the name of the author
         """
         return self.name
+
+class DotGraphGenerator:
+    """ The DotGraphGenerator turns a set of authors into a dot graph.
+    """
+    def __init__(self):
+        pass
+    def authors_to_dot(self, query_author, authors):
+        """ From a set of authors, compute a dot graph.
+        @param authors a set of authors
+        @return a pygraphviz.AGraph object that represents the graph
+        """
+        graph = pygraphviz.AGraph(strict=False, overlap=False)
+        for author in authors:
+            is_root = author == query_author
+            graph.add_node(author.id, label=author.name, root=is_root)
+        for author in authors:
+            for coauthor in author.coauthors:
+                graph.add_edge(author.id, coauthor.id)
+        return graph
+    def draw_graph(self, graph):
+        """ Draw the given dot graph. Writes output to the local directory.
+        @param graph the graph to draw
+        """
+        print('Number of nodes: {0}; number of edges: {1}'\
+                .format(graph.number_of_nodes(), graph.number_of_edges()))
+        graph.node_attr['shape'] = 'box'
+        prog='circo'
+        graph.layout(prog=prog)
+        graph.write('authors.{0}.dot'.format(prog))
+        graph.draw('authors.{0}.pdf'.format(prog))
+
+if __name__ == '__main__':
+    aparser = argparse.ArgumentParser(description='Get a graph for coauthors.')
+    aparser.add_argument('name', type=str,
+        help='the name of the author')
+    aparser.add_argument('-d', '--depth', type=int, default=5,
+        help='Depth of the resulting graph, i.e. max distance to coauthor')
+    args = aparser.parse_args()
+    sparser = ScholarAuthorParser()
+    author_id = sparser.find_author(args.name)
+    query_author = Author(args.name, author_id)
+    authors = set()
+    authors.add(query_author)
+    pending_authors = copy.copy(authors)
+    for _ in range(0,args.depth):
+        new_authors = set()
+        for author in pending_authors:
+            new_authors = new_authors.union(sparser.parse_author(author))
+        pending_authors.clear()
+        for author in new_authors:
+            if author not in authors:
+                authors.add(author)
+                pending_authors.add(author)
+    print('Author: {author}'.format(author=query_author))
+    print('Coauthors:')
+    for a in query_author.coauthors:
+        print(a)
+    print('Number of total authors: {0}'.format(len(authors)))
+    dot_generator = DotGraphGenerator()
+    graph = dot_generator.authors_to_dot(query_author, authors)
+    dot_generator.draw_graph(graph)
