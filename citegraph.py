@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2016 Till Hofmann
 # This file is part of CiteGraph.
 
@@ -38,7 +40,7 @@ class ScholarAuthorParser(object):
         @param name the name of the author
         @return author ID
         """
-        url = self.author_search_url.format(name=urllib.quote(name))
+        url = self.author_search_url.format(name=urllib.parse.quote(name))
         page = requests.get(self.base_url + url)
         tree = html.fromstring(page.content)
         author_tree_objects = tree.xpath(self.author_xpath)
