@@ -72,18 +72,20 @@ class ScholarAuthorParser(object):
         """
         return self.base_url + self.coauthor_search_url.format(id=author_id)
         
-    def parse_author(self, author):
+    def parse_author(self, author, num_coauthors):
         """ Parse the given author.
         This assumes the author's name and URL is already set properly. Fetch
         the URL from Google Scholar and parse the result. Set the author's
         coauthors to the list resulting from the request.
         @param author the author to parse; name and URL must be set.
+        @param num_coauthors the number of coauthors to return.
         @return the author's coauthors
         """
         page = requests.get(self.get_url_from_id(author.id))
         tree = html.fromstring(page.content)
         coauthor_tree_objects = tree.xpath(self.coauthor_xpath)
-        for coauthor_tree_object in coauthor_tree_objects:
+        coauthor_limit = num_coauthors or len(coauthor_tree_objects)
+        for coauthor_tree_object in coauthor_tree_objects[0:coauthor_limit]:
             # Each coauthor is an 'a' object. The text is the author's name, the
             # href is the Google Scholar URL.
             name = coauthor_tree_object.text_content()
@@ -166,6 +168,8 @@ if __name__ == '__main__':
         help='the name of the author')
     aparser.add_argument('-d', '--depth', type=int, default=5,
         help='Depth of the resulting graph, i.e. max distance to coauthor')
+    aparser.add_argument('-b', '--breadth', type=int, default=0,
+        help='Breadth of the resulting graph, i.e. number of coauthors to add')
     args = aparser.parse_args()
     sparser = ScholarAuthorParser()
     author_id = sparser.find_author(args.name)
@@ -176,7 +180,8 @@ if __name__ == '__main__':
     for _ in range(0,args.depth):
         new_authors = set()
         for author in pending_authors:
-            new_authors = new_authors.union(sparser.parse_author(author))
+            new_authors = new_authors.union(sparser.parse_author(author,
+                                                                 args.breadth))
         pending_authors.clear()
         for author in new_authors:
             if author not in authors:
