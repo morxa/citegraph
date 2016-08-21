@@ -135,8 +135,11 @@ class Author(object):
 class DotGraphGenerator:
     """ The DotGraphGenerator turns a set of authors into a dot graph.
     """
-    def __init__(self):
-        pass
+    def __init__(self, output):
+        """ Initialize the generator.
+        @param output the path to the output file
+        """
+        self.output = output
     def authors_to_dot(self, query_author, authors):
         """ From a set of authors, compute a dot graph.
         @param authors a set of authors
@@ -164,8 +167,7 @@ class DotGraphGenerator:
             'CiteGraph for {0}'.format(self.query_author.name)
         prog='circo'
         graph.layout(prog=prog)
-        graph.write('authors.{0}.dot'.format(prog))
-        graph.draw('authors.{0}.pdf'.format(prog))
+        graph.draw(self.output)
 
 if __name__ == '__main__':
     aparser = argparse.ArgumentParser(description='Get a graph for coauthors.')
@@ -175,6 +177,9 @@ if __name__ == '__main__':
         help='Depth of the resulting graph, i.e. max distance to coauthor')
     aparser.add_argument('-b', '--breadth', type=int, default=0,
         help='Breadth of the resulting graph, i.e. number of coauthors to add')
+    aparser.add_argument('-o', '--output', type=str, default='authors.pdf',
+        help='Output file; the output type is automatically determined by the '
+                'suffix of the output file')
     args = aparser.parse_args()
     sparser = ScholarAuthorParser()
     author_id = sparser.find_author(args.name)
@@ -197,6 +202,6 @@ if __name__ == '__main__':
     for a in query_author.coauthors:
         print(a)
     print('Number of total authors: {0}'.format(len(authors)))
-    dot_generator = DotGraphGenerator()
+    dot_generator = DotGraphGenerator(args.output)
     graph = dot_generator.authors_to_dot(query_author, authors)
     dot_generator.draw_graph(graph)
