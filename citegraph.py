@@ -142,7 +142,8 @@ class DotGraphGenerator:
         @param authors a set of authors
         @return a pygraphviz.AGraph object that represents the graph
         """
-        graph = pygraphviz.AGraph(strict=False, overlap=False)
+        self.query_author = query_author
+        graph = pygraphviz.AGraph(strict=True, overlap=False)
         for author in authors:
             is_root = author == query_author
             graph.add_node(author.id, label=author.name, root=is_root)
@@ -157,6 +158,10 @@ class DotGraphGenerator:
         print('Number of nodes: {0}; number of edges: {1}'\
                 .format(graph.number_of_nodes(), graph.number_of_edges()))
         graph.node_attr['shape'] = 'box'
+        graph.node_attr['style'] = 'filled'
+        graph.graph_attr['outputorder'] = 'edgesfirst'
+        graph.graph_attr['label'] = \
+            'CiteGraph for {0}'.format(self.query_author.name)
         prog='circo'
         graph.layout(prog=prog)
         graph.write('authors.{0}.dot'.format(prog))
