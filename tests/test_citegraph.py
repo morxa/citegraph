@@ -40,7 +40,7 @@ class TestScholarAuthorParser(unittest.TestCase):
         coauthor_name = 'Gerhard Lakemeyer'
         coauthor = citegraph.Author(coauthor_name,
                     self.parser.find_author(coauthor_name))
-        coauthors = self.parser.parse_author(author)
+        coauthors = self.parser.parse_author(author, 0)
         self.assertTrue(coauthor in coauthors)
 
 if __name__ == '__main__':
