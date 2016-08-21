@@ -22,7 +22,7 @@ from lxml import html
 import pygraphviz
 import re
 import requests
-import urllib
+import urllib.parse
 
 class ScholarAuthorParser(object):
     def __init__(self):
